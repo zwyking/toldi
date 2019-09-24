@@ -13,7 +13,7 @@
 #include <Eigen/Dense>
 
 #include <vtkAutoInit.h>
-VTK_MODULE_INIT(vtkRenderingOpenGL);
+//VTK_MODULE_INIT(vtkRenderingOpenGL);
 
 using namespace std;
 using namespace Eigen;
@@ -22,7 +22,7 @@ using namespace Eigen::Architecture;
 
 using PoinT = pcl::PointXYZ;
 using PointN = pcl::Normal;
-float radius = 0.03f;
+float radius = 0.015f;
 
 
 
@@ -49,11 +49,12 @@ int main()
 	filter.filter(*cloud);
 	cout << cloud->size() << endl;
 
+	
+	///***点云可视化***/
+	//pcl::visualization::PCLVisualizer viewer("cloud");
+	//viewer.addPointCloud<PoinT>(cloud, "cloud");
+	//viewer.spin();
 
-	/***点云可视化***/
-	pcl::visualization::PCLVisualizer viewer("cloud");
-	viewer.addPointCloud<PoinT>(cloud, "cloud");
-	viewer.spin();
 
 	/***建立kd树，计算点云中的LPR***/
 	//计算法向量(z轴)
@@ -72,21 +73,25 @@ int main()
 	vector<int> pointidxRadiusSearch;
 	vector<float> pointRadiusSquaredDistance;
 	vector<Vector3f> pointToKeypointVector;
+	Vector3f temp, normal_center;
 
 	//计算x轴
 	for (size_t i = 0; i < cloud->size(); i++)
 	{
 		if (kdtree.radiusSearch(cloud->points[i], radius, pointidxRadiusSearch, pointRadiusSquaredDistance) > 0)
 		{
+			normal_center << cloud->points[i].x, cloud->points[i].y, cloud->points[i].z;
 			for (size_t j = 0; j < pointidxRadiusSearch.size(); j++)
 			{
-				哈哈哈
+				/*temp.x << cloud->points[pointidxRadiusSearch[j]].x - cloud->points[i].x;
+				temp.y << cloud->points[pointidxRadiusSearch[j]].y - cloud->points[i].y;
+				temp.z << cloud->points[pointidxRadiusSearch[j]].z - cloud->points[i].z;*/
+				temp << cloud->points[pointidxRadiusSearch[j]].x - cloud->points[i].x, cloud->points[pointidxRadiusSearch[j]].y - cloud->points[i].y, cloud->points[pointidxRadiusSearch[j]].z - cloud->points[i].z;
+				temp=temp+
+				pointToKeypointVector.push_back(temp);
 			}
 		}
 	}
-
-
-	
 
 	system("pause");
 
