@@ -24,6 +24,11 @@ using PoinT = pcl::PointXYZ;
 using PointN = pcl::Normal;
 float radius = 0.015f;
 
+typedef struct
+{
+	float w1;
+	float w2;
+}point_weight;
 
 
 int main()
@@ -72,26 +77,50 @@ int main()
 
 	vector<int> pointidxRadiusSearch;
 	vector<float> pointRadiusSquaredDistance;
-	vector<Vector3f> pointToKeypointVector;
-	Vector3f temp, normal_center;
+	vector<Vector3f> pointToKeypointVector;//储存中心点到搜索点的3维向量
+	vector<Vector3f> zAxisNromal;//储存z轴方向
+	Vector3f temp, zaxis_vector;
+	vector<point_weight> pointXaxisWeight;//储存L2正则化的权重系数
+	point_weight temp_weight;
+	vector<Vector3f> xAxisNormal;//储存x轴方向
+	Vector3f xaxis_vector;
+	vector<Vector3f> yAxisNormal;//储存y轴方向
+	Vector3f yaxis_vector;
 
 	//计算x轴
 	for (size_t i = 0; i < cloud->size(); i++)
 	{
 		if (kdtree.radiusSearch(cloud->points[i], radius, pointidxRadiusSearch, pointRadiusSquaredDistance) > 0)
 		{
-			normal_center << cloud->points[i].x, cloud->points[i].y, cloud->points[i].z;
+			zaxis_vector << cloud_normals->points[i].normal_x, cloud_normals->points[i].normal_y, cloud_normals->points[i].normal_z;
+			zAxisNromal.push_back(zaxis_vector);
+			xaxis_vector << 0, 0, 0;
 			for (size_t j = 0; j < pointidxRadiusSearch.size(); j++)
 			{
 				/*temp.x << cloud->points[pointidxRadiusSearch[j]].x - cloud->points[i].x;
 				temp.y << cloud->points[pointidxRadiusSearch[j]].y - cloud->points[i].y;
 				temp.z << cloud->points[pointidxRadiusSearch[j]].z - cloud->points[i].z;*/
 				temp << cloud->points[pointidxRadiusSearch[j]].x - cloud->points[i].x, cloud->points[pointidxRadiusSearch[j]].y - cloud->points[i].y, cloud->points[pointidxRadiusSearch[j]].z - cloud->points[i].z;
-				temp=temp+
+				temp_weight.w1 = pow(radius - sqrt(pow(temp[0], 2) + pow(temp[1], 2) + pow(temp[2], 2)), 2);
+				temp_weight.w2 = pow(temp.dot(zaxis_vector), 2);
+				temp = temp - (temp.dot(zaxis_vector))*zaxis_vector;
+				pointXaxisWeight.push_back(temp_weight);
 				pointToKeypointVector.push_back(temp);
 			}
+			for (size_t k = 0; k < pointidxRadiusSearch.size(); k++)
+			{
+				xaxis_vector = xaxis_vector + pointXaxisWeight[k].w1*pointXaxisWeight[k].w2*pointToKeypointVector[k];
+			}
+			xaxis_vector = xaxis_vector / sqrt(pow(xaxis_vector[0], 2) + pow(xaxis_vector[1], 2) + pow(xaxis_vector[2], 2));
+			xAxisNormal.push_back(xaxis_vector);
+			yaxis_vector = zaxis_vector.cross(xaxis_vector);
+			yAxisNormal.push_back(yaxis_vector);
+			pointToKeypointVector.clear();
+			pointXaxisWeight.clear();
 		}
 	}
+
+
 
 	system("pause");
 
