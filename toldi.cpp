@@ -11,6 +11,7 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <Eigen/Dense>
+#include <pcl/ModelCoefficient,h>
 
 #include <vtkAutoInit.h>
 //VTK_MODULE_INIT(vtkRenderingOpenGL);
@@ -88,6 +89,7 @@ int main()
 	Vector3f yaxis_vector;
 	pcl::PointCloud<PoinT>::Ptr LRF_cloud(new pcl::PointCloud<PoinT>);//储存LRF坐标系下的坐标
 	pcl::PointCloud<PoinT>::Ptr LRF_projectted(new pcl::PointCloud<PoinT>);
+	pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
 
 	//计算LRF坐标系及TOLDI算子
 	for (size_t i = 0; i < cloud->size(); i++)
@@ -119,14 +121,14 @@ int main()
 			yAxisNormal.push_back(yaxis_vector);
 
 			LRF_cloud->resize(pointidxRadiusSearch.size());
-			//计算投影新坐标
+			//计算LRF新坐标
 			for (size_t k = 0; k < pointidxRadiusSearch.size(); k++)
 			{
 				LRF_cloud->points[k].x = pointToKeypointVector[k].dot(xaxis_vector);
 				LRF_cloud->points[k].y = pointToKeypointVector[k].dot(yaxis_vector);
 				LRF_cloud->points[k].z = pointToKeypointVector[k].dot(zaxis_vector);
 			}
-
+			
 
 			pointToKeypointVector.clear();
 			pointXaxisWeight.clear();
