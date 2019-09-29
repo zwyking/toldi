@@ -11,7 +11,8 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <Eigen/Dense>
-#include <pcl/ModelCoefficient,h>
+#include <pcl/ModelCoefficients.h>
+#include <pcl/filters/project_inliers.h>
 
 #include <vtkAutoInit.h>
 //VTK_MODULE_INIT(vtkRenderingOpenGL);
@@ -45,6 +46,7 @@ int main()
 		return (-1);
 	}
 	cout << cloud->size()<<endl;
+
 
 	/***降采样***/
 	// 创建滤波对象
@@ -88,8 +90,12 @@ int main()
 	vector<Vector3f> yAxisNormal;//储存y轴方向
 	Vector3f yaxis_vector;
 	pcl::PointCloud<PoinT>::Ptr LRF_cloud(new pcl::PointCloud<PoinT>);//储存LRF坐标系下的坐标
-	pcl::PointCloud<PoinT>::Ptr LRF_projectted(new pcl::PointCloud<PoinT>);
+	pcl::PointCloud<PoinT>::Ptr LRF_projected(new pcl::PointCloud<PoinT>);
 	pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
+	pcl::ProjectInliers<PoinT> proj;
+	//pcl::VoxelGrid<PoinT> filter_2D;
+	//filter_2D.setLeafSize(radius / 10, radius / 10, radius / 10);
+	vector<float> histogram;
 
 	//计算LRF坐标系及TOLDI算子
 	for (size_t i = 0; i < cloud->size(); i++)
@@ -128,8 +134,25 @@ int main()
 				LRF_cloud->points[k].y = pointToKeypointVector[k].dot(yaxis_vector);
 				LRF_cloud->points[k].z = pointToKeypointVector[k].dot(zaxis_vector);
 			}
-			
 
+			//投影到X-Y平面
+			coefficients->values.resize(4);
+			coefficients->values[0] = 0;
+			coefficients->values[1] = 0;
+			coefficients->values[2] = 1;
+			coefficients->values[3] = 0;
+
+			proj.setModelType(pcl::SACMODEL_PLANE);
+			proj.setInputCloud(LRF_cloud);
+			proj.setModelCoefficients(coefficients);
+			proj.filter(*LRF_projected);
+
+			histogram.resize(400);
+			for (size_t k = 0; k < pointidxRadiusSearch.size(); k++)
+			{
+
+			}
+			
 			pointToKeypointVector.clear();
 			pointXaxisWeight.clear();
 		}
