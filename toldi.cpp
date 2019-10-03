@@ -25,6 +25,7 @@ using namespace Eigen::Architecture;
 using PoinT = pcl::PointXYZ;
 using PointN = pcl::Normal;
 float radius = 0.015f;
+//float radius = 0.03f;
 
 typedef struct
 {
@@ -96,6 +97,7 @@ int main()
 	//pcl::VoxelGrid<PoinT> filter_2D;
 	//filter_2D.setLeafSize(radius / 10, radius / 10, radius / 10);
 	vector<float> histogram;
+	int index_x, index_y;
 
 	//计算LRF坐标系及TOLDI算子
 	for (size_t i = 0; i < cloud->size(); i++)
@@ -147,17 +149,26 @@ int main()
 			proj.setModelCoefficients(coefficients);
 			proj.filter(*LRF_projected);
 
-			histogram.resize(400);
+			//histogram.resize(400);
+			histogram.insert(histogram.begin(), 400, 2);
 			for (size_t k = 0; k < pointidxRadiusSearch.size(); k++)
 			{
-
+				index_x = floor((radius + LRF_projected->points[k].x) * 20 / radius);
+				index_y = floor((radius + LRF_projected->points[k].y) * 20 / radius);
+				//cout <<  LRF_cloud->points[k].y << endl;
+				if (((radius - LRF_cloud->points[k].z) / (2 * radius)) < histogram[index_x + index_y * 20])
+				{
+					histogram[index_x + index_y * 20] = (radius - LRF_cloud->points[k].z) / (2 * radius);
+				}
 			}
-			
+			for (size_t k = 0; k < 400; k++)
+			{
+				cout << histogram[k] << endl;
+			}
 			pointToKeypointVector.clear();
 			pointXaxisWeight.clear();
 		}
 	}
-
 
 	system("pause");
 
