@@ -44,7 +44,7 @@ int main()
 	int flag;
 	vector<vector<float>> feature1, feature2;
 	string path_1 = "Bologna_Retrieval\\Models\\bunny.ply";
-	string path_2 = "Bologna_Retrieval\\Scenes\\noise_0.1mr\\Scene0_0.1.ply";
+	string path_2 = "Bologna_Retrieval\\Scenes\\original\\Scene0.ply";
 	pcl::PointCloud<PoinT>::Ptr source_cloud(new pcl::PointCloud<PoinT>);
 	pcl::PointCloud<PoinT>::Ptr test_cloud(new pcl::PointCloud<PoinT>);
 
@@ -284,12 +284,12 @@ void Matrix_Computer(vector<vector<int>> &registration, pcl::PointCloud<PoinT>::
 
 	for (int i = 0;i < cloud_in->points.size();i++)
 	{
-		cloud_in->points[i].x = test_cloud->points[registration[i][1]].x;
-		cloud_in->points[i].y = test_cloud->points[registration[i][1]].y;
-		cloud_in->points[i].z = test_cloud->points[registration[i][1]].z;
-		cloud_out->points[i].x = source_cloud->points[registration[i][0]].x;
-		cloud_out->points[i].y = source_cloud->points[registration[i][0]].y;
-		cloud_out->points[i].z = source_cloud->points[registration[i][0]].z;
+		cloud_out->points[i].x = test_cloud->points[registration[i][1]].x;
+		cloud_out->points[i].y = test_cloud->points[registration[i][1]].y;
+		cloud_out->points[i].z = test_cloud->points[registration[i][1]].z;
+		cloud_in->points[i].x = source_cloud->points[registration[i][0]].x;
+		cloud_in->points[i].y = source_cloud->points[registration[i][0]].y;
+		cloud_in->points[i].z = source_cloud->points[registration[i][0]].z;
 	}
 
 	pcl::registration::TransformationEstimationSVD<pcl::PointXYZ, pcl::PointXYZ> TESVD;
@@ -310,7 +310,7 @@ void Matrix_Computer(vector<vector<int>> &registration, pcl::PointCloud<PoinT>::
 	transformation2(2, 3) = 0.027941;*/
 
 	pcl::PointCloud<PoinT>::Ptr transformed_cloud(new pcl::PointCloud<PoinT>);
-	pcl::transformPointCloud(*test_cloud, *transformed_cloud, transformation2);
+	pcl::transformPointCloud(*source_cloud, *transformed_cloud, transformation2);
 	//pcl::transformPointCloud(*test_cloud, *transformed_cloud, transformation2);
 
 
@@ -324,14 +324,14 @@ void Matrix_Computer(vector<vector<int>> &registration, pcl::PointCloud<PoinT>::
 	dual_points.resize(2);
 	srand((unsigned)time(NULL));
 	int k;
-	for (size_t p = 0;p < 600;p++)
+	for (size_t p = 0;p < 1000;p++)
 	{
 		for (size_t i = 0;i < registration.size();i++)
 		{
 			distance = 0;
-			distance = distance + pow(transformed_cloud->points[registration[i][1]].x - source_cloud->points[registration[i][0]].x, 2);
-			distance = distance + pow(transformed_cloud->points[registration[i][1]].y - source_cloud->points[registration[i][0]].y, 2);
-			distance = distance + pow(transformed_cloud->points[registration[i][1]].z - source_cloud->points[registration[i][0]].z, 2);
+			distance = distance + pow(transformed_cloud->points[registration[i][0]].x - test_cloud->points[registration[i][1]].x, 2);
+			distance = distance + pow(transformed_cloud->points[registration[i][0]].y - test_cloud->points[registration[i][1]].y, 2);
+			distance = distance + pow(transformed_cloud->points[registration[i][0]].z - test_cloud->points[registration[i][1]].z, 2);
 			if (distance < distance_threshold)
 			{
 				dual_points[0] = registration[i][0];
@@ -340,24 +340,24 @@ void Matrix_Computer(vector<vector<int>> &registration, pcl::PointCloud<PoinT>::
 			}
 		}
 		cout << inside_points.size() << endl;
-		if (inside_points.size() > points_threshold)
+		if ((inside_points.size() > points_threshold) && (p > 500))
 		{
 			break;
 		}
 		for (size_t j = 0;j < cloud_in->points.size();j++)
 		{
 			k = rand() % inside_points.size();
-			cloud_in->points[j].x = test_cloud->points[inside_points[k][1]].x;
-			cloud_in->points[j].y = test_cloud->points[inside_points[k][1]].y;
-			cloud_in->points[j].z = test_cloud->points[inside_points[k][1]].z;
-			cloud_out->points[j].x = source_cloud->points[inside_points[k][0]].x;
-			cloud_out->points[j].y = source_cloud->points[inside_points[k][0]].y;
-			cloud_out->points[j].z = source_cloud->points[inside_points[k][0]].z;
+			cloud_out->points[j].x = test_cloud->points[inside_points[k][1]].x;
+			cloud_out->points[j].y = test_cloud->points[inside_points[k][1]].y;
+			cloud_out->points[j].z = test_cloud->points[inside_points[k][1]].z;
+			cloud_in->points[j].x = source_cloud->points[inside_points[k][0]].x;
+			cloud_in->points[j].y = source_cloud->points[inside_points[k][0]].y;
+			cloud_in->points[j].z = source_cloud->points[inside_points[k][0]].z;
 		}
 		transformed_cloud->clear();
 		inside_points.clear();
 		TESVD.estimateRigidTransformation(*cloud_in, *cloud_out, transformation2);
-		pcl::transformPointCloud(*test_cloud, *transformed_cloud, transformation2);
+		pcl::transformPointCloud(*source_cloud, *transformed_cloud, transformation2);
 	}
 
 
@@ -383,9 +383,9 @@ void Matrix_Computer(vector<vector<int>> &registration, pcl::PointCloud<PoinT>::
 	pcl::visualization::PCLVisualizer viewer("Matrix transformation example");
 
 	// 为点云定义 R,G,B 颜色
-	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> source_cloud_color_handler(source_cloud, 255, 255, 255);
+	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> source_cloud_color_handler(test_cloud, 255, 255, 255);
 	// 输出点云到查看器，使用颜色管理
-	viewer.addPointCloud(source_cloud, source_cloud_color_handler, "original_cloud");
+	viewer.addPointCloud(test_cloud, source_cloud_color_handler, "original_cloud");
 
 	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> transformed_cloud_color_handler(transformed_cloud, 230, 20, 20); // 红
 	viewer.addPointCloud(transformed_cloud, transformed_cloud_color_handler, "transformed_cloud");
