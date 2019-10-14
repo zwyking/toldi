@@ -26,7 +26,7 @@ using namespace Eigen::Architecture;
 
 using PoinT = pcl::PointXYZ;
 using PointN = pcl::Normal;
-float radius = 0.6f;
+float radius = 0.9f;
 //float radius = 0.03f;
 
 typedef struct
@@ -43,8 +43,8 @@ int main()
 {
 	int flag;
 	vector<vector<float>> feature1, feature2;
-	string path_1 = "Bologna_Retrieval\\Models\\bunny.ply";
-	string path_2 = "Bologna_Retrieval\\Scenes\\original\\Scene0.ply";
+	string path_1 = "Bologna_Retrieval\\Models\\Chinese_dragon.ply";
+	string path_2 = "Bologna_Retrieval\\Scenes\\original\\Scene2.ply";
 	pcl::PointCloud<PoinT>::Ptr source_cloud(new pcl::PointCloud<PoinT>);
 	pcl::PointCloud<PoinT>::Ptr test_cloud(new pcl::PointCloud<PoinT>);
 
@@ -82,7 +82,7 @@ int TOLDI_description(string &path, vector<vector<float>> & TOLDIfeatures, pcl::
 	pcl::VoxelGrid<PoinT> filter;
 	filter.setInputCloud(cloud);
 	// 设置体素栅格的大小
-	filter.setLeafSize(0.005f, 0.005f, 0.005f);
+	filter.setLeafSize(0.004f, 0.004f, 0.004f);
 	filter.filter(*cloud);
 	cout << cloud->size() << endl;
 
@@ -318,7 +318,7 @@ void Matrix_Computer(vector<vector<int>> &registration, pcl::PointCloud<PoinT>::
 	/***RANSAC***/
 	float distance;
 	float distance_threshold = 0.001f;
-	float points_threshold = 2700;
+	float points_threshold = source_cloud->size()*0.85;
 	vector<int> dual_points;
 	vector<vector<int>> inside_points;
 	dual_points.resize(2);
@@ -342,6 +342,7 @@ void Matrix_Computer(vector<vector<int>> &registration, pcl::PointCloud<PoinT>::
 		cout << inside_points.size() << endl;
 		if ((inside_points.size() > points_threshold) && (p > 500))
 		{
+			cout <<" ---- "<< p << endl;
 			break;
 		}
 		for (size_t j = 0;j < cloud_in->points.size();j++)
