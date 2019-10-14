@@ -318,7 +318,7 @@ void Matrix_Computer(vector<vector<int>> &registration, pcl::PointCloud<PoinT>::
 	/***RANSAC***/
 	float distance;
 	float distance_threshold = 0.001f;
-	float points_threshold = 2800;
+	float points_threshold = 2700;
 	vector<int> dual_points;
 	vector<vector<int>> inside_points;
 	dual_points.resize(2);
