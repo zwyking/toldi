@@ -15,7 +15,7 @@
 #include <pcl/filters/project_inliers.h>
 
 #include <vtkAutoInit.h>
-//VTK_MODULE_INIT(vtkRenderingOpenGL);
+VTK_MODULE_INIT(vtkRenderingOpenGL);
 
 using namespace std;
 using namespace Eigen;
@@ -59,10 +59,10 @@ int main()
 	cout << cloud->size() << endl;
 
 	
-	///***点云可视化***/
-	//pcl::visualization::PCLVisualizer viewer("cloud");
-	//viewer.addPointCloud<PoinT>(cloud, "cloud");
-	//viewer.spin();
+	/***点云可视化***/
+	/*pcl::visualization::PCLVisualizer viewer("cloud");
+	viewer.addPointCloud<PoinT>(cloud, "cloud");
+	viewer.spin();*/
 
 
 	/***建立kd树，计算点云中的LPR***/
@@ -98,6 +98,7 @@ int main()
 	//filter_2D.setLeafSize(radius / 10, radius / 10, radius / 10);
 	vector<float> histogram;
 	int index_x, index_y;
+	vector<vector<float>> TOLDIfeatures;
 
 	//计算LRF坐标系及TOLDI算子
 	for (size_t i = 0; i < cloud->size(); i++)
@@ -137,39 +138,65 @@ int main()
 				LRF_cloud->points[k].z = pointToKeypointVector[k].dot(zaxis_vector);
 			}
 
-			//投影到X-Y平面
-			coefficients->values.resize(4);
-			coefficients->values[0] = 0;
-			coefficients->values[1] = 0;
-			coefficients->values[2] = 1;
-			coefficients->values[3] = 0;
+			////投影到X-Y平面
+			//coefficients->values.resize(4);
+			//coefficients->values[0] = 0;
+			//coefficients->values[1] = 0;
+			//coefficients->values[2] = 1;
+			//coefficients->values[3] = 0;
 
-			proj.setModelType(pcl::SACMODEL_PLANE);
-			proj.setInputCloud(LRF_cloud);
-			proj.setModelCoefficients(coefficients);
-			proj.filter(*LRF_projected);
+			//proj.setModelType(pcl::SACMODEL_PLANE);
+			//proj.setInputCloud(LRF_cloud);
+			//proj.setModelCoefficients(coefficients);
+			//proj.filter(*LRF_projected);
 
-			//histogram.resize(400);
-			histogram.insert(histogram.begin(), 400, 2);
+			histogram.insert(histogram.begin(), 1200, 2);
 			for (size_t k = 0; k < pointidxRadiusSearch.size(); k++)
 			{
-				index_x = floor((radius + LRF_projected->points[k].x) * 20 / radius);
-				index_y = floor((radius + LRF_projected->points[k].y) * 20 / radius);
+				index_x = floor((radius + LRF_cloud->points[k].x) * 10 / radius);
+				index_y = floor((radius + LRF_cloud->points[k].y) * 10 / radius);
 				//cout <<  LRF_cloud->points[k].y << endl;
 				if (((radius - LRF_cloud->points[k].z) / (2 * radius)) < histogram[index_x + index_y * 20])
 				{
 					histogram[index_x + index_y * 20] = (radius - LRF_cloud->points[k].z) / (2 * radius);
 				}
 			}
-			for (size_t k = 0; k < 400; k++)
+			for (size_t k = 0; k < pointidxRadiusSearch.size(); k++)
+			{
+				index_x = floor((radius + LRF_cloud->points[k].x) * 10 / radius);
+				index_y = floor((radius + LRF_cloud->points[k].z) * 10 / radius);
+				//cout <<  LRF_cloud->points[k].y << endl;
+				if (((radius - LRF_cloud->points[k].y) / (2 * radius)) < histogram[index_x + index_y * 20])
+				{
+					histogram[index_x + index_y * 20 + 400] = (radius - LRF_cloud->points[k].y) / (2 * radius);
+				}
+			}
+			for (size_t k = 0; k < pointidxRadiusSearch.size(); k++)
+			{
+				index_x = floor((radius + LRF_cloud->points[k].y) * 10 / radius);
+				index_y = floor((radius + LRF_cloud->points[k].z) * 10 / radius);
+				//cout <<  LRF_cloud->points[k].y << endl;
+				if (((radius - LRF_cloud->points[k].x) / (2 * radius)) < histogram[index_x + index_y * 20])
+				{
+					histogram[index_x + index_y * 20 + 800] = (radius - LRF_cloud->points[k].x) / (2 * radius);
+				}
+			}
+
+			/*for (size_t k = 0; k < 1200; k++)
 			{
 				cout << histogram[k] << endl;
-			}
+			}*/
+			TOLDIfeatures.push_back(histogram);
+			histogram.clear();
 			pointToKeypointVector.clear();
 			pointXaxisWeight.clear();
+			pointRadiusSquaredDistance.clear();
+			pointidxRadiusSearch.clear();
 		}
+		cout << i << endl;
 	}
 
+	
 	system("pause");
 
 	return(0);
